@@ -1253,6 +1253,11 @@ pub fn gateway_list(gateway_flag: &Option<String>) -> Result<()> {
 }
 
 async fn http_health_check(server: &str, tls: &TlsOptions) -> Result<Option<StatusCode>> {
+    #[cfg(unix)]
+    if server.starts_with("unix://") {
+        return Ok(None);
+    }
+
     let base = server.trim_end_matches('/');
     let uri: hyper::Uri = format!("{base}/healthz").parse().into_diagnostic()?;
 
@@ -6049,6 +6054,19 @@ mod tests {
 
         server.join().expect("server thread");
         assert_eq!(status, Some(StatusCode::OK));
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn http_health_check_skips_unix_socket_endpoints() {
+        let status = http_health_check(
+            "unix:///tmp/openshell-test.sock",
+            &TlsOptions::default(),
+        )
+        .await
+        .expect("skip unix socket endpoint");
+
+        assert_eq!(status, None);
     }
 
     // ---- SEC-004: validate_gateway_name, validate_ssh_host, shell_escape ----
