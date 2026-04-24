@@ -87,7 +87,7 @@ if [ "$FROM_SOURCE" = "1" ]; then
     echo "==> Compressing runtime artifacts for embedding..."
     "${ROOT}/tasks/scripts/vm/compress-vm-runtime.sh"
 else
-    echo "==> Downloading pre-built runtime..."
+    echo "==> Downloading pre-built runtime (uses curl, no gh CLI required)..."
     "${ROOT}/tasks/scripts/vm/download-kernel-runtime.sh"
 fi
 

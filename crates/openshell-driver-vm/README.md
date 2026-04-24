@@ -162,7 +162,7 @@ The VM guest's serial console is appended to `<state-dir>/<sandbox-id>/console.l
   - `cargo install --locked cargo-zigbuild` and `brew install zig` (or distro equivalent). `build-rootfs.sh` uses `cargo zigbuild` to cross-compile the in-VM `openshell-sandbox` supervisor binary.
 - [mise](https://mise.jdx.dev/) task runner
 - Docker (needed by `mise run vm:rootfs` to build the base rootfs)
-- `gh` CLI (used by `mise run vm:setup` to download pre-built runtime artifacts)
+- `curl` (used by `mise run vm:setup` to download pre-built runtime artifacts)
 
 ## Relationship to `openshell-vm`
 

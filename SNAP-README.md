@@ -18,14 +18,19 @@ This could be a `curl | bash` script but we don't publish those as a recommended
 ## Build it
 
 You need `rockcraft` and `snapcraft` to build the Docker image and snap respectively.
+The snap also embeds the VM runtime, so local builds need `gh` (to download the
+prebuilt VM runtime artifacts) and Docker (to build the base rootfs tarball).
 
 ```
 sudo snap install snapcraft --classic
 sudo snap install rockcraft --classic
 ```
 
+Make sure `curl` is installed and Docker is running before you build the snap.
 
-This will build a rock (docker image) and then a snap which bundles that rock. Bundling the rock is a short term thing,
+
+This will prepare the embedded VM runtime artifacts if they are missing, build a rock (docker image),
+and then build a snap which bundles that rock. Bundling the rock is a short term thing,
 we will shortly be able to attach the rock as a resource for the snap, which can be pulled dynamically (and updated
 independently).
 

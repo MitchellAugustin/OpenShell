@@ -8,6 +8,9 @@
 # This script is used by CI (release-vm-dev.yml) and can also be used locally
 # to avoid building libkrun/libkrunfw from source.
 #
+# Downloads using curl (no GitHub CLI required). Assets are fetched directly
+# from the public GitHub releases download URL.
+#
 # Usage:
 #   ./download-kernel-runtime.sh [--platform PLATFORM]
 #
@@ -39,6 +42,7 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: $0 [--platform PLATFORM]"
             echo ""
             echo "Download pre-built VM kernel runtime from the vm-dev GitHub Release."
+            echo "Uses curl — no GitHub CLI required."
             echo ""
             echo "Platforms: linux-aarch64, linux-x86_64, darwin-aarch64"
             echo ""
@@ -67,11 +71,11 @@ echo "    Artifact:   ${TARBALL_NAME}"
 echo "    Output:     ${OUTPUT_DIR}"
 echo ""
 
-# ── Check for gh CLI ────────────────────────────────────────────────────
+# ── Check for curl ──────────────────────────────────────────────────────
 
-if ! command -v gh &>/dev/null; then
-    echo "Error: GitHub CLI (gh) is required." >&2
-    echo "  Install: https://cli.github.com/" >&2
+if ! command -v curl &>/dev/null; then
+    echo "Error: curl is required." >&2
+    echo "  Install via your package manager (e.g. apt install curl)" >&2
     exit 1
 fi
 
@@ -80,21 +84,22 @@ fi
 DOWNLOAD_DIR="${ROOT}/target/vm-runtime-download"
 mkdir -p "$DOWNLOAD_DIR" "$OUTPUT_DIR"
 
-echo "==> Downloading ${TARBALL_NAME} from ${RELEASE_TAG}..."
-gh release download "${RELEASE_TAG}" \
-    --repo "${REPO}" \
-    --pattern "${TARBALL_NAME}" \
-    --dir "${DOWNLOAD_DIR}" \
-    --clobber
+# Direct GitHub releases download URL — works without authentication for public repos.
+DOWNLOAD_URL="https://github.com/${REPO}/releases/download/${RELEASE_TAG}/${TARBALL_NAME}"
 
-if [ ! -f "${DOWNLOAD_DIR}/${TARBALL_NAME}" ]; then
-    echo "Error: Download failed — ${TARBALL_NAME} not found." >&2
+echo "==> Downloading ${TARBALL_NAME} from ${RELEASE_TAG}..."
+echo "    URL: ${DOWNLOAD_URL}"
+curl --fail --location --progress-bar \
+    -o "${DOWNLOAD_DIR}/${TARBALL_NAME}" \
+    "${DOWNLOAD_URL}" || {
+    echo "" >&2
+    echo "Error: Download failed for ${TARBALL_NAME}." >&2
     echo "" >&2
     echo "The vm-dev release may not have kernel runtime artifacts yet." >&2
-    echo "Run the 'Release VM Kernel' workflow first:" >&2
-    echo "  gh workflow run release-vm-kernel.yml" >&2
+    echo "Check that the release tag '${RELEASE_TAG}' exists at:" >&2
+    echo "  https://github.com/${REPO}/releases/tag/${RELEASE_TAG}" >&2
     exit 1
-fi
+}
 
 echo "    Downloaded: $(du -sh "${DOWNLOAD_DIR}/${TARBALL_NAME}" | cut -f1)"
 
