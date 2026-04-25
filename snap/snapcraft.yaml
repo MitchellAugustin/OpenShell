@@ -47,6 +47,13 @@ apps:
       - network-bind
       - kube-config
 
+hooks:
+  configure:
+    plugs:
+      - network
+      - network-bind
+      - kube-config
+
 plugs:
   kube-config:
     interface: personal-files
@@ -68,6 +75,7 @@ parts:
       - libclang-dev
       - libz3-dev
     stage-packages:
+      - curl
       - libz3-4
       - skopeo
       - openssh-client
