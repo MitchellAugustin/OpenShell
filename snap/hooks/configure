@@ -38,12 +38,6 @@ if [ "$DRIVER" = "k8s" ]; then
         exit 1
     fi
 
-    # Attempt to initialize k8s cluster
-    echo "Initializing OpenShell Kubernetes Cluster..."
-    if ! "$SNAP/bin/openshell" cluster init --registry "$REGISTRY"; then
-        echo "Error: Failed to initialize Kubernetes cluster" >&2
-        exit 1
-    fi
 elif [ "$DRIVER" != "vm" ]; then
     echo "Error: Invalid driver '$DRIVER'. Allowed values: vm, k8s" >&2
     exit 1
@@ -60,3 +54,8 @@ EOF
 
 # Restart the gateway daemon
 snapctl restart openshell.server
+
+if [ "$DRIVER" = "k8s" ]; then
+    echo "OpenShell configured for k8s with registry $REGISTRY."
+    echo "Run 'openshell cluster init --registry $REGISTRY' as your user to finish Kubernetes setup."
+fi
