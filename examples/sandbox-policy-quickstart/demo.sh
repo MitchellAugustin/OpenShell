@@ -20,10 +20,8 @@ set -euo pipefail
 SANDBOX_NAME="policy-demo"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 POLICY_FILE="${SCRIPT_DIR}/policy.yaml"
-SSH_CONFIG=$(mktemp)
 
 cleanup() {
-    rm -f "$SSH_CONFIG"
     printf '\n'
     step "Cleaning up"
     openshell sandbox delete "$SANDBOX_NAME" 2>/dev/null || true
@@ -66,18 +64,18 @@ colorize_logs() {
 }
 
 sandbox_exec() {
-    ssh -F "$SSH_CONFIG" "$SSH_HOST" "$@" 2>&1
+    openshell sandbox exec --name "$SANDBOX_NAME" --no-tty -- "$@" 2>&1
 }
 
-wait_for_ssh() {
-    local retries=15
+wait_for_sandbox_exec() {
+    local retries=20
     for i in $(seq 1 "$retries"); do
-        if ssh -F "$SSH_CONFIG" "$SSH_HOST" true >/dev/null 2>&1; then
+        if sandbox_exec true >/dev/null 2>&1; then
             return 0
         fi
         sleep 2
     done
-    printf "  ${RED}✗ SSH connection to sandbox timed out${RESET}\n"
+    printf "  ${RED}✗ Sandbox command channel timed out${RESET}\n"
     exit 1
 }
 
@@ -92,9 +90,7 @@ run openshell sandbox create \
     -- echo "sandbox ready"
 
 step "Connecting to sandbox"
-openshell sandbox ssh-config "$SANDBOX_NAME" > "$SSH_CONFIG"
-SSH_HOST=$(awk '/^Host / { print $2; exit }' "$SSH_CONFIG")
-wait_for_ssh
+wait_for_sandbox_exec
 
 # ------------------------------------------------------------------
 
