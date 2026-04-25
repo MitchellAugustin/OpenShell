@@ -62,7 +62,9 @@ fn resolve_gateway(
     gateway_flag: &Option<String>,
     gateway_endpoint: &Option<String>,
 ) -> Result<GatewayContext> {
-    if let Some(endpoint) = gateway_endpoint {
+    if let Some(endpoint) = gateway_endpoint
+        && !should_ignore_snap_gateway_endpoint(endpoint)
+    {
         // When a gateway name is explicitly provided (via flag or env var),
         // trust it directly — don't require metadata to exist yet. This
         // avoids a race condition where mTLS certs are stored under the
@@ -138,6 +140,29 @@ fn command_needs_snap_k8s_auto_init(command: &Option<Commands>) -> bool {
     )
 }
 
+fn load_snap_config() -> Option<HashMap<String, String>> {
+    if std::env::var("SNAP").is_err() {
+        return None;
+    }
+
+    let snap_data = std::env::var("SNAP_DATA").ok()?;
+    let config_path = std::path::Path::new(&snap_data).join("config.env");
+    let contents = std::fs::read_to_string(config_path).ok()?;
+    Some(parse_snap_config(&contents))
+}
+
+fn should_ignore_snap_gateway_endpoint(endpoint: &str) -> bool {
+    if !endpoint.starts_with("unix://") {
+        return false;
+    }
+
+    let Some(config) = load_snap_config() else {
+        return false;
+    };
+
+    matches!(config.get("DRIVER").map(String::as_str), Some("k8s")) && load_active_gateway().is_some()
+}
+
 fn parse_snap_config(contents: &str) -> HashMap<String, String> {
     let mut values = HashMap::new();
 
@@ -163,24 +188,13 @@ async fn maybe_auto_init_snap_k8s(command: &Option<Commands>) -> Result<()> {
         return Ok(());
     }
 
-    if std::env::var("SNAP").is_err() {
-        return Ok(());
-    }
-
     if load_active_gateway().is_some() {
         return Ok(());
     }
 
-    let snap_data = match std::env::var("SNAP_DATA") {
-        Ok(path) => path,
-        Err(_) => return Ok(()),
+    let Some(config) = load_snap_config() else {
+        return Ok(());
     };
-    let config_path = std::path::Path::new(&snap_data).join("config.env");
-    let config_contents = match std::fs::read_to_string(&config_path) {
-        Ok(contents) => contents,
-        Err(_) => return Ok(()),
-    };
-    let config = parse_snap_config(&config_contents);
 
     let driver = config.get("DRIVER").map(String::as_str).unwrap_or("vm");
     if driver != "k8s" {
