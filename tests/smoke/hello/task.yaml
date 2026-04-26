@@ -7,6 +7,10 @@ details: |
     and that the openshell command is available and functional.
 
 prepare: |
+    # Connect kvm plug for sandbox runtime
+    sudo snap connect openshell:kvm
+    # Set driver to vm (k8s support is WIP)
+    snap set openshell driver=vm
     snap run openshell sandbox list | MATCH "No sandboxes found."
 
 execute: |

@@ -6,6 +6,12 @@ details: |
     Checks that the claude and copilot binaries are installed at the expected
     paths inside the VM rootfs and have executable permissions.
 
+prepare: |
+    # Connect kvm plug for sandbox runtime
+    sudo snap connect openshell:kvm
+    # Set driver to vm (k8s support is WIP)
+    snap set openshell driver=vm
+
 execute: |
     snap run openshell sandbox create -- sh -c 'test -x "$(which claude)"'
     snap run openshell sandbox create -- sh -c 'test -x "$(which copilot)"'
