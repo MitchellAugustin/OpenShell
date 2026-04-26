@@ -29,11 +29,8 @@ if [ -n "$SOCKET_MODE" ]; then
 	fi
 fi
 
-# Apply mode immediately to the current socket if it exists.
+# Apply socket mode immediately to the current socket if it exists.
 SOCKET_PATH="$SNAP_COMMON/run/gateway.sock"
 if [ -S "$SOCKET_PATH" ]; then
 	chmod "$SOCKET_MODE" "$SOCKET_PATH"
 fi
-
-# Apply updated snap settings (driver/group/mode) immediately.
-snapctl restart openshell.gateway
