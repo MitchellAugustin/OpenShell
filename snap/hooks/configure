@@ -29,15 +29,6 @@ if [ -n "$SOCKET_MODE" ]; then
 	fi
 fi
 
-# Write environment file for the daemon wrapper
-mkdir -p "$SNAP_DATA"
-cat <<EOF >"$SNAP_DATA/config.env"
-DRIVER="${DRIVER}"
-REGISTRY="${REGISTRY}"
-SOCKET_GROUP="${SOCKET_GROUP}"
-SOCKET_MODE="${SOCKET_MODE}"
-EOF
-
 # Apply mode immediately to the current socket if it exists.
 SOCKET_PATH="$SNAP_COMMON/run/gateway.sock"
 if [ -S "$SOCKET_PATH" ]; then
