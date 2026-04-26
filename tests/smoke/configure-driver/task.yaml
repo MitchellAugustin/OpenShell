@@ -27,10 +27,10 @@ execute: |
     snap set openshell driver=k8s
     snap restart openshell.gateway
     for _ in $(seq 1 20); do
-        ps -eo args | MATCH "openshell-gateway.*--drivers kubernetes" && break
+        pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes" && break
         sleep 1
     done
-    ps -eo args | MATCH "openshell-gateway.*--drivers kubernetes"
+    pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes"
 
 restore: |
     snap unset openshell driver
