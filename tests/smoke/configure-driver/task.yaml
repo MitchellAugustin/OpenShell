@@ -17,11 +17,11 @@ execute: |
 
     # Test default runtime driver is vm when driver is unset.
     snap unset openshell driver
-    snap get openshell driver | MATCH "^$"
+    snap get openshell driver 2>&1 | MATCH "has no \"driver\" configuration option"
 
     # Test invalid driver is rejected and does not change snap state
     snap set openshell driver=podman 2>&1 | MATCH "Error: Invalid driver"
-    snap get openshell driver | MATCH "^$"
+    snap get openshell driver 2>&1 | MATCH "has no \"driver\" configuration option"
 
     # Verify that k8s driver is translated to kubernetes at runtime.
     snap set openshell driver=k8s
