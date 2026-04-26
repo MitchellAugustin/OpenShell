@@ -34,3 +34,6 @@ SOCKET_PATH="$SNAP_COMMON/run/gateway.sock"
 if [ -S "$SOCKET_PATH" ]; then
 	chmod "$SOCKET_MODE" "$SOCKET_PATH"
 fi
+
+# Apply updated snap settings (driver/group/mode) immediately.
+snapctl restart openshell.gateway

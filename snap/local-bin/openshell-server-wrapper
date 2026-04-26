@@ -15,6 +15,13 @@ if [ "$DRIVER" != "vm" ] && [ "$DRIVER" != "k8s" ]; then
 	DRIVER="vm"
 fi
 
+# The snap exposes `k8s` for user convenience, while the gateway CLI expects
+# the canonical compute driver token `kubernetes`.
+SERVER_DRIVER="$DRIVER"
+if [ "$DRIVER" = "k8s" ]; then
+	SERVER_DRIVER="kubernetes"
+fi
+
 if [ -z "$SOCKET_MODE" ]; then
 	SOCKET_MODE="0666"
 fi
@@ -58,4 +65,4 @@ if [ -n "$PODMAN_SOCKET" ]; then
 	export OPENSHELL_PODMAN_SOCKET="$PODMAN_SOCKET"
 fi
 
-exec "$SNAP/bin/openshell-gateway" --db-url "sqlite:$SNAP_DATA/openshell.db" --drivers "${DRIVER:-vm}" "${UDS_ARGS[@]}" "${TLS_ARGS[@]}" "${SSH_SECRET_ARGS[@]}" "${GRPC_ARGS[@]}" "$@"
+exec "$SNAP/bin/openshell-gateway" --db-url "sqlite:$SNAP_DATA/openshell.db" --drivers "${SERVER_DRIVER:-vm}" "${UDS_ARGS[@]}" "${TLS_ARGS[@]}" "${SSH_SECRET_ARGS[@]}" "${GRPC_ARGS[@]}" "$@"

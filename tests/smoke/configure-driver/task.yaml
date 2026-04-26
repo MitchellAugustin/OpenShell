@@ -10,16 +10,25 @@ execute: |
     # Test driver set to k8s
     snap set openshell driver=k8s
     snap get openshell driver | MATCH "^k8s$"
+    for _ in $(seq 1 20); do
+        ps -eo args | MATCH "openshell-gateway.*--drivers kubernetes" && break
+        sleep 1
+    done
+    ps -eo args | MATCH "openshell-gateway.*--drivers kubernetes"
 
     # Test driver set to vm
     snap set openshell driver=vm
     snap get openshell driver | MATCH "^vm$"
+    for _ in $(seq 1 20); do
+        ps -eo args | MATCH "openshell-gateway.*--drivers vm" && break
+        sleep 1
+    done
+    ps -eo args | MATCH "openshell-gateway.*--drivers vm"
 
     # Test default runtime driver is vm when driver is unset.
     snap unset openshell driver
     snap get openshell driver | MATCH "^$"
 
-    snap restart openshell.gateway
     for _ in $(seq 1 20); do
         ps -eo args | MATCH "openshell-gateway.*--drivers vm" && break
         sleep 1
