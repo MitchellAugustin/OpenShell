@@ -14,14 +14,16 @@ execute: |
     # Test driver set to vm
     snap set openshell driver=vm
     snap get openshell driver | MATCH "^vm$"
-
-    # Test default runtime driver is vm when driver is unset.
-    snap unset openshell driver
-    snap get openshell driver 2>&1 | MATCH "has no \"driver\" configuration option"
+    for _ in $(seq 1 20); do
+        pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers vm" && break
+        sleep 1
+    done
+    pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers vm"
 
     # Test invalid driver is rejected and does not change snap state
     snap set openshell driver=podman 2>&1 | MATCH "Error: Invalid driver"
-    snap get openshell driver 2>&1 | MATCH "has no \"driver\" configuration option"
+    snap get openshell driver | MATCH "^vm$"
+    pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers vm"
 
     # Verify that k8s driver is translated to kubernetes at runtime.
     snap set openshell driver=k8s
@@ -30,6 +32,14 @@ execute: |
         sleep 1
     done
     pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes"
+
+    # Unset driver and verify runtime falls back to vm default.
+    snap unset openshell driver
+    for _ in $(seq 1 20); do
+        pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers vm" && break
+        sleep 1
+    done
+    pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers vm"
 
 restore: |
     snap unset openshell driver
