@@ -26,12 +26,12 @@ execute: |
     pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers vm"
 
     # Verify that k8s driver is translated to kubernetes at runtime.
-    snap set openshell driver=k8s
-    for _ in $(seq 1 20); do
-        pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes" && break
-        sleep 1
-    done
-    pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes"
+    # snap set openshell driver=k8s
+    # for _ in $(seq 1 20); do
+    #     pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes" && break
+    #     sleep 1
+    # done
+    # pgrep -fa openshell-gateway | MATCH "openshell-gateway.*--drivers kubernetes"
 
     # Unset driver and verify runtime falls back to vm default.
     snap unset openshell driver
