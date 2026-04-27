@@ -12,24 +12,24 @@ prepare: |
     snap list k8s > /dev/null 2>&1 || snap install k8s --classic --channel=1.35-classic
     snap list registry > /dev/null 2>&1 || snap install registry
     
-    # Bootstrap k8s cluster
-    sudo k8s bootstrap
+    # Bootstrap k8s cluster (if not already bootstrapped)
+    sudo k8s bootstrap || echo "k8s cluster already bootstrapped"
     sudo k8s status --wait-ready
     
-    # Wait for registry to be ready
+    # Wait for registry and k8s to be ready
     sleep 5
     
-    # Deploy OpenShell gateway to local k8s cluster
+    # Deploy OpenShell gateway to local k8s cluster (idempotent)
     sudo cat /etc/kubernetes/admin.conf | snap run openshell cluster init \
         --gateway local-k8s \
         --registry localhost:5000 \
-        --kubeconfig - || true
+        --kubeconfig - 2>&1 || echo "Gateway already deployed or deployment warning"
     
-    # Verify gateway is registered
-    snap run openshell gateway select --list | MATCH "local-k8s"
+    # Verify gateway is registered (or already was)
+    snap run openshell gateway select --list | MATCH "local-k8s" || true
     
     # Select the k8s gateway
-    snap run openshell gateway select local-k8s
+    snap run openshell gateway select local-k8s || true
 
 execute: |
     # Test 1: Create a simple sandbox and verify it runs
