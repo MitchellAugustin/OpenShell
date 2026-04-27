@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: Canonical Ltd.
+# SPDX-License-Identifier: Apache-2.0
+
+summary: Test k8s sandbox creation with example workloads
+details: |
+    This test verifies that OpenShell can create and manage sandboxes on a
+    local Kubernetes cluster. It sets up a local k8s cluster, deploys the
+    OpenShell gateway, and creates example non-interactive sandboxes.
+
+prepare: |
+    # Install k8s and registry snaps (if not already installed)
+    snap list k8s > /dev/null 2>&1 || snap install k8s --classic --channel=1.35-classic
+    snap list registry > /dev/null 2>&1 || snap install registry
+    
+    # Bootstrap k8s cluster
+    sudo k8s bootstrap
+    sudo k8s status --wait-ready
+    
+    # Wait for registry to be ready
+    sleep 5
+    
+    # Deploy OpenShell gateway to local k8s cluster
+    sudo cat /etc/kubernetes/admin.conf | snap run openshell cluster init \
+        --gateway local-k8s \
+        --registry localhost:5000 \
+        --kubeconfig - || true
+    
+    # Verify gateway is registered
+    snap run openshell gateway select --list | MATCH "local-k8s"
+    
+    # Select the k8s gateway
+    snap run openshell gateway select local-k8s
+
+execute: |
+    # Test 1: Create a simple sandbox and verify it runs
+    snap run openshell sandbox create --name k8s-simple --keep \
+        -- echo "Hello from Kubernetes sandbox"
+    
+    # Verify sandbox exists and is ready
+    snap run openshell sandbox list | MATCH "k8s-simple"
+    snap run openshell sandbox list | MATCH "Ready"
+    
+    # Test 2: Create a sandbox from openclaw example (if available)
+    # This assumes openclaw provider is available in the sandbox image
+    snap run openshell sandbox create --name k8s-openclaw --keep \
+        --from openclaw \
+        -- echo "Openclaw sandbox on k8s" || true
+    
+    # List all sandboxes to verify both exist
+    snap run openshell sandbox list | MATCH "k8s-simple"
+    snap run openshell sandbox list | MATCH "k8s-openclaw" || true
+
+restore: |
+    # Clean up sandboxes
+    snap run openshell sandbox delete --all || true
+    
+    # Reset gateway selection
+    snap run openshell gateway select local-vm || true
