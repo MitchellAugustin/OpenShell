@@ -25,9 +25,6 @@ public_key_path  = "${CANONICAL_TLS_DIR}/jwt/public.pem"
 kid_path         = "${CANONICAL_TLS_DIR}/jwt/kid"
 gateway_id       = "openshell"
 ttl_secs         = 0
-
-[openshell.gateway.auth]
-allow_unauthenticated_users = true
 EOF
 fi
 
