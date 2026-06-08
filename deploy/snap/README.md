@@ -98,8 +98,20 @@ to move the gateway to the refreshed snap revision.
 
 `openshell-sandbox` is staged next to `openshell-gateway` as the Docker
 supervisor binary. The gateway app starts through a small wrapper that sets
-Snap-specific defaults and reads `$SNAP_COMMON/gateway.toml` when that file
-exists. The service stores its gateway database under `$SNAP_COMMON`.
+Snap-specific defaults and stores runtime state under `$SNAP_COMMON`.
+
+On first start, the wrapper seeds `$SNAP_COMMON/gateway.toml` with local
+Docker defaults, including `[openshell.gateway.gateway_jwt]` and
+`[openshell.gateway.auth] allow_unauthenticated_users = true`.
+
+Before each start, it runs:
+
+```shell
+openshell-gateway generate-certs --output-dir "$SNAP_COMMON/tls" --server-san host.openshell.internal
+```
+
+This keeps mTLS and sandbox JWT files present at `$SNAP_COMMON/tls`, including
+`jwt/signing.pem`, `jwt/public.pem`, and `jwt/kid`.
 
 ## Interfaces
 
@@ -144,13 +156,16 @@ The service runs the gateway with Snap-specific environment defaults:
 ```shell
 OPENSHELL_DISABLE_TLS=true \
 OPENSHELL_DB_URL="sqlite:$SNAP_COMMON/gateway.db?mode=rwc" \
+OPENSHELL_LOCAL_TLS_DIR="$SNAP_COMMON/tls" \
 openshell.gateway
 ```
 
 This stores the gateway SQLite database at
-`/var/snap/openshell/common/gateway.db`. Create
-`/var/snap/openshell/common/gateway.toml` when you need to override gateway or
-Docker driver settings.
+`/var/snap/openshell/common/gateway.db` and key material under
+`/var/snap/openshell/common/tls/`.
+
+Create `/var/snap/openshell/common/gateway.toml` only when you need to
+override the seeded defaults.
 
 ## Connect with the OpenShell CLI
 
